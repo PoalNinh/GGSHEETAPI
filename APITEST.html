@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý dữ liệu Google Sheets</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+        }
+        .form-section {
+            flex: 1;
+            padding: 20px;
+            background-color: #f5f5f5;
+            border-radius: 8px;
+        }
+        .data-section {
+            flex: 2;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        tr:hover {
+            background-color: #f9f9f9;
+        }
+        input, button {
+            padding: 8px;
+            margin: 5px 0;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        button {
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .edit-mode {
+            background-color: #fffde7;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+        }
+        .edit-btn {
+            background-color: #2196F3;
+        }
+        .delete-btn {
+            background-color: #f44336;
+        }
+        .cancel-btn {
+            background-color: #9e9e9e;
+        }
+        .status {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #dff0d8;
+            color: #3c763d;
+        }
+        .error {
+            background-color: #f2dede;
+            color: #a94442;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Quản lý dữ liệu Google Sheets</h1>
+    
+    <div class="container">
+        <div class="form-section">
+            <h2 id="form-title">Thêm người dùng mới</h2>
+            
+            <div class="form-group">
+                <label for="ten">Tên:</label>
+                <input type="text" id="ten" placeholder="Nhập tên" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="tuoi">Tuổi:</label>
+                <input type="number" id="tuoi" placeholder="Nhập tuổi" required>
+            </div>
+            
+            <input type="hidden" id="user-id">
+            
+            <div class="form-group">
+                <button id="submit-btn" onclick="addData()">Thêm</button>
+                <button id="update-btn" class="hidden" onclick="updateData()">Cập nhật</button>
+                <button id="cancel-btn" class="hidden cancel-btn" onclick="cancelEdit()">Hủy</button>
+            </div>
+            
+            <div id="status" class="status hidden"></div>
+        </div>
+        
+        <div class="data-section">
+            <h2>Danh sách người dùng</h2>
+            <button onclick="reloadData()">Tải lại dữ liệu</button>
+            
+            <div id="loading">Đang tải dữ liệu...</div>
+            
+            <table id="data-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Tên</th>
+                        <th>Tuổi</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody id="data-body">
+                    <!-- Dữ liệu sẽ được thêm vào đây -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <script>
+        // Thay thế YOUR_DEPLOYMENT_ID bằng ID triển khai thực tế của bạn
+        const API_URL = 'https://script.google.com/macros/s/AKfycbxkszQCjomhc5fNOoTKDP6s2h0IquLwCJoGhNN2Q5nUl6sjzPHS62L3BganuQuQDOg/exec';
+        let editMode = false;
+        
+        // Tải dữ liệu khi trang được tải
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+        });
+        
+        // Tải dữ liệu từ API
+        async function loadData() {
+            showLoading(true);
+            
+            try {
+                const response = await fetch(`${API_URL}?action=find&sheet=Sheet1`);
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    displayData(result.data);
+                } else {
+                    showStatus(false, `Lỗi: ${result.message}`);
+                }
+            } catch (error) {
+                showStatus(false, `Lỗi kết nối: ${error.message}`);
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        // Hiển thị dữ liệu trong bảng
+        function displayData(data) {
+            const tableBody = document.getElementById('data-body');
+            tableBody.innerHTML = '';
+            
+            if (data && data.length > 0) {
+                data.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${item.id}</td>
+                        <td>${item.ten}</td>
+                        <td>${item.tuoi}</td>
+                        <td class="action-buttons">
+                            <button class="edit-btn" onclick="editItem('${item.id}', '${item.ten}', '${item.tuoi}')">Sửa</button>
+                            <button class="delete-btn" onclick="deleteItem('${item.id}')">Xóa</button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            } else {
+                tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Không có dữ liệu</td></tr>';
+            }
+        }
+        
+        // Thêm dữ liệu mới
+        async function addData() {
+            const tenInput = document.getElementById('ten');
+            const tuoiInput = document.getElementById('tuoi');
+            
+            const ten = tenInput.value.trim();
+            const tuoi = tuoiInput.value.trim();
+            
+            if (!ten || !tuoi) {
+                showStatus(false, 'Vui lòng nhập đầy đủ thông tin');
+                return;
+            }
+            
+            showLoading(true);
+            
+            const data = {
+                id: Date.now().toString(), // Tạo ID dựa trên timestamp
+                ten: ten,
+                tuoi: tuoi
+            };
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'add',
+                        sheet: 'Sheet1',
+                        data: data
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    showStatus(true, result.message);
+                    tenInput.value = '';
+                    tuoiInput.value = '';
+                    loadData(); // Tải lại dữ liệu
+                } else {
+                    showStatus(false, `Lỗi: ${result.message}`);
+                }
+            } catch (error) {
+                showStatus(false, `Lỗi kết nối: ${error.message}`);
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        // Chuẩn bị chỉnh sửa
+        function editItem(id, ten, tuoi) {
+            editMode = true;
+            
+            document.getElementById('form-title').textContent = 'Chỉnh sửa người dùng';
+            document.getElementById('user-id').value = id;
+            document.getElementById('ten').value = ten;
+            document.getElementById('tuoi').value = tuoi;
+            
+            document.getElementById('submit-btn').classList.add('hidden');
+            document.getElementById('update-btn').classList.remove('hidden');
+            document.getElementById('cancel-btn').classList.remove('hidden');
+            
+            // Cuộn lên phần form
+            document.querySelector('.form-section').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // Hủy chỉnh sửa
+        function cancelEdit() {
+            editMode = false;
+            
+            document.getElementById('form-title').textContent = 'Thêm người dùng mới';
+            document.getElementById('user-id').value = '';
+            document.getElementById('ten').value = '';
+            document.getElementById('tuoi').value = '';
+            
+            document.getElementById('submit-btn').classList.remove('hidden');
+            document.getElementById('update-btn').classList.add('hidden');
+            document.getElementById('cancel-btn').classList.add('hidden');
+        }
+        
+        // Cập nhật dữ liệu
+        async function updateData() {
+            const id = document.getElementById('user-id').value;
+            const ten = document.getElementById('ten').value.trim();
+            const tuoi = document.getElementById('tuoi').value.trim();
+            
+            if (!ten || !tuoi) {
+                showStatus(false, 'Vui lòng nhập đầy đủ thông tin');
+                return;
+            }
+            
+            showLoading(true);
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'edit',
+                        sheet: 'Sheet1',
+                        id: id,
+                        data: {
+                            ten: ten,
+                            tuoi: tuoi
+                        }
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    showStatus(true, result.message);
+                    cancelEdit(); // Quay lại chế độ thêm mới
+                    loadData(); // Tải lại dữ liệu
+                } else {
+                    showStatus(false, `Lỗi: ${result.message}`);
+                }
+            } catch (error) {
+                showStatus(false, `Lỗi kết nối: ${error.message}`);
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        // Xóa dữ liệu
+        async function deleteItem(id) {
+            if (!confirm('Bạn có chắc chắn muốn xóa?')) {
+                return;
+            }
+            
+            showLoading(true);
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'delete',
+                        sheet: 'Sheet1',
+                        id: id
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    showStatus(true, result.message);
+                    loadData(); // Tải lại dữ liệu
+                } else {
+                    showStatus(false, `Lỗi: ${result.message}`);
+                }
+            } catch (error) {
+                showStatus(false, `Lỗi kết nối: ${error.message}`);
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        // Tải lại dữ liệu
+        function reloadData() {
+            loadData();
+        }
+        
+        // Hiển thị/ẩn trạng thái loading
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+        
+        // Hiển thị thông báo trạng thái
+        function showStatus(success, message) {
+            const statusElement = document.getElementById('status');
+            statusElement.textContent = message;
+            statusElement.classList.remove('hidden', 'success', 'error');
+            statusElement.classList.add(success ? 'success' : 'error');
+            
+            // Tự động ẩn thông báo sau 3 giây
+            setTimeout(() => {
+                statusElement.classList.add('hidden');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
