@@ -10,27 +10,29 @@ API này cho phép bạn thực hiện các thao tác CRUD (Tạo, Đọc, Cập
 - **Phương thức hỗ trợ**: GET, POST
 - **Định dạng dữ liệu trả về**: JSON
 
-## Tham số chung
-
-| Tham số | Mô tả |
-|---------|-------|
-| `action` | Hành động cần thực hiện (`find`, `add`, `adds`, `edit`, `edits`, `delete`, `deletes`) |
-| `sheet` | Tên của sheet cần thao tác (mặc định: "Sheet1") |
-
 ## Các API có sẵn
 
 ### 1. Tìm kiếm dữ liệu (`find`)
 
-#### Tìm tất cả dữ liệu
+#### Sử dụng GET
 
 ```
 GET ?action=find&sheet=TenSheet
 ```
 
-#### Tìm theo ID
-
+Hoặc tìm theo ID:
 ```
 GET ?action=find&sheet=TenSheet&id=123
+```
+
+#### Sử dụng POST
+
+```json
+{
+  "action": "find",
+  "sheet": "TenSheet",
+  "id": "123" // Không bắt buộc, nếu không có thì trả về tất cả dữ liệu
+}
 ```
 
 #### Phản hồi
@@ -47,8 +49,23 @@ GET ?action=find&sheet=TenSheet&id=123
 
 ### 2. Thêm một bản ghi (`add`)
 
+#### Sử dụng GET
+
 ```
-GET/POST ?action=add&sheet=TenSheet&data={"ten":"Nguyễn Văn A","tuoi":"30"}
+GET ?action=add&sheet=TenSheet&data={"ten":"Nguyễn Văn A","tuoi":"30"}
+```
+
+#### Sử dụng POST
+
+```json
+{
+  "action": "add",
+  "sheet": "TenSheet",
+  "data": {
+    "ten": "Nguyễn Văn A",
+    "tuoi": "30"
+  }
+}
 ```
 
 #### Phản hồi
@@ -62,8 +79,23 @@ GET/POST ?action=add&sheet=TenSheet&data={"ten":"Nguyễn Văn A","tuoi":"30"}
 
 ### 3. Thêm nhiều bản ghi cùng lúc (`adds`)
 
+#### Sử dụng GET
+
 ```
-GET/POST ?action=adds&sheet=TenSheet&data=[{"ten":"Nguyễn Văn A","tuoi":"30"},{"ten":"Trần Thị B","tuoi":"25"}]
+GET ?action=adds&sheet=TenSheet&data=[{"ten":"Nguyễn Văn A","tuoi":"30"},{"ten":"Trần Thị B","tuoi":"25"}]
+```
+
+#### Sử dụng POST (Khuyên dùng)
+
+```json
+{
+  "action": "adds",
+  "sheet": "TenSheet",
+  "data": [
+    {"ten": "Nguyễn Văn A", "tuoi": "30"},
+    {"ten": "Trần Thị B", "tuoi": "25"}
+  ]
+}
 ```
 
 #### Phản hồi
@@ -78,8 +110,23 @@ GET/POST ?action=adds&sheet=TenSheet&data=[{"ten":"Nguyễn Văn A","tuoi":"30"}
 
 ### 4. Cập nhật một bản ghi (`edit`)
 
+#### Sử dụng GET
+
 ```
-GET/POST ?action=edit&sheet=TenSheet&id=123&data={"ten":"Tên Mới"}
+GET ?action=edit&sheet=TenSheet&id=123&data={"ten":"Tên Mới"}
+```
+
+#### Sử dụng POST
+
+```json
+{
+  "action": "edit",
+  "sheet": "TenSheet",
+  "id": "123",
+  "data": {
+    "ten": "Tên Mới"
+  }
+}
 ```
 
 #### Phản hồi
@@ -93,8 +140,23 @@ GET/POST ?action=edit&sheet=TenSheet&id=123&data={"ten":"Tên Mới"}
 
 ### 5. Cập nhật nhiều bản ghi cùng lúc (`edits`)
 
+#### Sử dụng GET
+
 ```
-GET/POST ?action=edits&sheet=TenSheet&data=[{"id":"123","ten":"Tên Mới"},{"id":"124","tuoi":"35"}]
+GET ?action=edits&sheet=TenSheet&data=[{"id":"123","ten":"Tên Mới"},{"id":"124","tuoi":"35"}]
+```
+
+#### Sử dụng POST (Khuyên dùng)
+
+```json
+{
+  "action": "edits",
+  "sheet": "TenSheet",
+  "data": [
+    {"id": "123", "ten": "Tên Mới"},
+    {"id": "124", "tuoi": "35"}
+  ]
+}
 ```
 
 #### Phản hồi
@@ -109,8 +171,20 @@ GET/POST ?action=edits&sheet=TenSheet&data=[{"id":"123","ten":"Tên Mới"},{"id
 
 ### 6. Xóa một bản ghi (`delete`)
 
+#### Sử dụng GET
+
 ```
-GET/POST ?action=delete&sheet=TenSheet&id=123
+GET ?action=delete&sheet=TenSheet&id=123
+```
+
+#### Sử dụng POST
+
+```json
+{
+  "action": "delete",
+  "sheet": "TenSheet",
+  "id": "123"
+}
 ```
 
 #### Phản hồi
@@ -124,8 +198,20 @@ GET/POST ?action=delete&sheet=TenSheet&id=123
 
 ### 7. Xóa nhiều bản ghi cùng lúc (`deletes`)
 
+#### Sử dụng GET
+
 ```
-GET/POST ?action=deletes&sheet=TenSheet&ids=["123","124","125"]
+GET ?action=deletes&sheet=TenSheet&ids=["123","124","125"]
+```
+
+#### Sử dụng POST (Khuyên dùng)
+
+```json
+{
+  "action": "deletes",
+  "sheet": "TenSheet",
+  "ids": ["123", "124", "125"]
+}
 ```
 
 #### Phản hồi
@@ -150,8 +236,11 @@ Các thông báo lỗi phổ biến:
 - "Không tìm thấy cột ID"
 - "Không tìm thấy ID"
 - "Hành động không hợp lệ"
+- "Lỗi định dạng JSON trong body"
 
 ## Ví dụ sử dụng với JavaScript
+
+### Sử dụng phương thức GET
 
 ```javascript
 // Tìm tất cả dữ liệu
@@ -185,6 +274,67 @@ async function addData() {
 }
 ```
 
+### Sử dụng phương thức POST (Khuyên dùng cho dữ liệu lớn)
+
+```javascript
+// Thêm dữ liệu sử dụng POST
+async function addDataWithPost() {
+    const API_URL = 'https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec';
+    
+    const postData = {
+        action: "add",
+        sheet: "Sheet1",
+        data: {
+            id: Date.now().toString(),
+            ten: "Nguyễn Văn A",
+            tuoi: "30"
+        }
+    };
+    
+    try {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            body: JSON.stringify(postData),
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        const result = await response.json();
+        console.log(result);
+    } catch (error) {
+        console.error('Lỗi:', error);
+    }
+}
+
+// Cập nhật nhiều bản ghi sử dụng POST
+async function editMultipleWithPost() {
+    const API_URL = 'https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec';
+    
+    const postData = {
+        action: "edits",
+        sheet: "Sheet1",
+        data: [
+            {id: "123", ten: "Tên Đã Sửa 1"},
+            {id: "124", tuoi: "45"}
+        ]
+    };
+    
+    try {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            body: JSON.stringify(postData),
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        const result = await response.json();
+        console.log(result);
+    } catch (error) {
+        console.error('Lỗi:', error);
+    }
+}
+```
+
 ## Lưu ý quan trọng
 
 1. **Cấu trúc dữ liệu**:
@@ -197,58 +347,15 @@ async function addData() {
 
 3. **Bảo mật**:
    - Nếu API bạn dùng cho dữ liệu nhạy cảm, hãy cân nhắc thiết lập xác thực
+   - Triển khai với "Who has access" được cấu hình phù hợp
 
-## Cách sử dụng với các ngôn ngữ/công nghệ khác
+4. **Hiệu suất**:
+   - Thao tác hàng loạt (adds, edits, deletes) hiệu quả hơn so với nhiều thao tác đơn lẻ
+   - Nên giới hạn số lượng bản ghi trong một lần gọi API để tránh vượt quá thời gian thực thi
 
-### PHP
-
-```php
-// Tìm tất cả dữ liệu
-function findAll() {
-    $api_url = 'https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec?action=find&sheet=Sheet1';
-    $response = file_get_contents($api_url);
-    $data = json_decode($response, true);
-    print_r($data);
-}
-```
-
-### Python
-
-```python
-import requests
-import json
-
-# Tìm tất cả dữ liệu
-def find_all():
-    api_url = 'https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec?action=find&sheet=Sheet1'
-    response = requests.get(api_url)
-    data = response.json()
-    print(data)
-```
-
-### jQuery
-
-```javascript
-// Tìm tất cả dữ liệu
-function findAll() {
-    const API_URL = 'https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec';
-    
-    $.ajax({
-        url: API_URL,
-        type: 'GET',
-        data: {
-            'action': 'find',
-            'sheet': 'Sheet1'
-        },
-        success: function(response) {
-            console.log(response);
-        },
-        error: function(error) {
-            console.error('Lỗi:', error);
-        }
-    });
-}
-```
+5. **Xử lý CORS**:
+   - Google Apps Script tự động xử lý CORS khi triển khai làm Web App
+   - Đảm bảo cấu hình triển khai cho phép truy cập từ nguồn bạn cần
 
 ## Xử lý lỗi phổ biến
 
@@ -256,5 +363,6 @@ function findAll() {
 2. **Lỗi "Invalid argument"**: Kiểm tra lại định dạng dữ liệu JSON
 3. **Lỗi "Sheet not found"**: Xác nhận tên sheet đã chính xác
 4. **Lỗi "ID not found"**: Kiểm tra ID bạn đang tìm kiếm có tồn tại trong sheet không
+5. **Lỗi "Script has exceeded maximum execution time"**: Giảm khối lượng dữ liệu xử lý trong một lần gọi
 
 Nếu bạn cần hỗ trợ thêm hoặc gặp vấn đề khác, vui lòng kiểm tra lỗi trả về từ API để biết thêm chi tiết.
